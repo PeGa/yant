@@ -1,0 +1,50 @@
+# Variables:
+#
+# HTTPPORT (e.g. 80; only customizable for testing environments	)
+# SERVERNAME #(e.g. www.example.com)
+# CLIENTMAXBODYSIZE #(e.g. 20m)
+# ROOTDIR #(e.g. /var/html)
+# ACCESSLOG #(e.g. /var/log/nginx/site.log)
+# ERRORLOG #(e.g. /var/log/nginx/site-error.log)
+# SSLTARGET #(e.g. https://www.example.com/$request_uri)
+
+# If Let's Encrypt's nginx plugin isn't able to handle http to https redirect, the following block might help.
+#
+# server {
+# 	listen HTTPPORT;
+# 	server_name SERVERNAME;
+# 	return 301 SSLTARGET;
+# }
+
+server {
+
+	listen HTTPPORT;
+	client_max_body_size CLIENTMAXBODYSIZE;
+	server_name SERVERNAME;
+	root ROOTDIR;
+	index index.php;
+	access_log ACCESSLOG;
+	error_log ERRORLOG;
+
+	location ~* ^(/robots.txt|/favicon.ico)$ {
+		allow all;
+		log_not_found off;
+		access_log off;
+	}
+
+	location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+		expires max;
+		log_not_found off;
+	}
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		include fastcgi.conf;
+		fastcgi_intercept_errors on;
+		fastcgi_pass 127.0.0.1:9001;
+	}
+
+}
